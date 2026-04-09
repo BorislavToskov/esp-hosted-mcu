@@ -3,3 +3,5 @@ dependencies.lock
 managed_components
 sdkconfig
 sdkconfig.old
+.claude/settings.json
+.vscode/settings.json
