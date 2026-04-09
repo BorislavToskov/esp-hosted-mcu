@@ -44,6 +44,8 @@
 #include "esp_hosted_cli.h"
 #include "host_power_save.h"
 
+#include "demo_app.h"
+
 #if CONFIG_ESP_HOSTED_NETWORK_SPLIT_ENABLED
 	#include "esp_hosted_rpc.pb-c.h"
 	volatile uint8_t station_got_ip = 0;
@@ -926,6 +928,15 @@ static void register_reset_pin(uint32_t gpio_num)
 }
 #endif
 #ifdef CONFIG_ESP_HOSTED_NETWORK_SPLIT_ENABLED
+static void slave_dhcp_restart_handler(void *arg, esp_event_base_t base,
+                                        int32_t id, void *data)
+{
+	esp_netif_t *netif = (esp_netif_t *)arg;
+	esp_netif_dhcpc_stop(netif);
+	esp_netif_dhcpc_start(netif);
+	ESP_LOGI(TAG, "DHCP client (re)started on STA connect");
+}
+
 void create_slave_sta_netif(uint8_t dhcp_at_slave)
 {
 	/* Create "almost" default station, but with un-flagged DHCP client */
@@ -950,11 +961,16 @@ void create_slave_sta_netif(uint8_t dhcp_at_slave)
 		ESP_LOGI(TAG, "No DHCP at slave");
 	} else {
 		ESP_LOGI(TAG, "DHCP at slave");
-		/* TODO: Is below line needed? */
-		//ESP_ERROR_CHECK(esp_netif_dhcpc_start(netif_sta));
 	}
 
 	slave_sta_netif = netif_sta;
+
+	/* Explicitly (re)start DHCP every time WiFi connects, including after
+	 * reconnects triggered by the host. The default handlers alone are not
+	 * sufficient because the host may trigger a disconnect/reconnect cycle
+	 * that leaves the DHCP client stopped. */
+	esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED,
+		slave_dhcp_restart_handler, netif_sta);
 }
 #endif
 
@@ -1236,6 +1252,7 @@ void app_main(void)
 	ESP_ERROR_CHECK( ret );
 
 	esp_hosted_coprocessor_init();
+	demo_app_start();
 
 #ifdef CONFIG_ESP_HOSTED_NETWORK_SPLIT_ENABLED
 #ifdef ESP_HOSTED_COPROCESSOR_EXAMPLE_HTTP_CLIENT

@@ -10,6 +10,7 @@ set(COMPONENT_SRCS
 	"${common_dir}/utils/esp_hosted_cli.c"
 	"protocomm_pserial.c"
 	"esp_hosted_coprocessor.c"
+	"demo_app.c"
 	"slave_bt.c"
 	"mempool.c"
 	"stats.c"
@@ -59,7 +60,13 @@ list(APPEND COMPONENT_ADD_INCLUDEDIRS "${common_dir}/utils")
 list(APPEND COMPONENT_SRCS "${common_dir}/utils/esp_hosted_cli.c")
 
 
-register_component()
+idf_component_register(
+    SRCS ${COMPONENT_SRCS}
+    INCLUDE_DIRS ${COMPONENT_ADD_INCLUDEDIRS}
+    PRIV_REQUIRES driver protobuf-c app_update esp_timer bt
+                 esp_wifi esp_netif esp_event nvs_flash mqtt
+                 protocomm wpa_supplicant esp_system hal soc lwip
+)
 
 # Add directory of protocomm_priv.h to include paths
 idf_component_get_property(protocomm_dir protocomm COMPONENT_DIR)

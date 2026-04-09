@@ -1331,6 +1331,7 @@ esp_err_t __wrap_esp_wifi_init(const wifi_init_config_t *config)
 
 static esp_err_t req_wifi_init(Rpc *req, Rpc *resp, void *priv_data)
 {
+	
 	int ret = 0;
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
