@@ -1274,5 +1274,22 @@ menu "Example Configuration"
 				default 10
 
 		endmenu
+
+		menu "TCP client config"
+
+			config TCP_SERVER_IP
+				string "TCP server IP address"
+				default "192.168.0.107"
+				help
+					IP address of the TCP server to connect to.
+
+			config TCP_SERVER_PORT
+				int "TCP server port"
+				default 23
+				range 1 65535
+				help
+					Port number of the TCP server to connect to.
+
+		endmenu
 	endmenu
 endmenu

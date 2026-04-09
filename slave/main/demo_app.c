@@ -17,8 +17,8 @@ static const char *TAG = "demo_app";
 #define DEMO_UART_BAUD      115200
 #define DEMO_UART_BUF_SIZE  256
 
-#define TCP_SERVER_IP       "192.168.0.107"
-#define TCP_SERVER_PORT     23
+#define TCP_SERVER_IP       CONFIG_TCP_SERVER_IP
+#define TCP_SERVER_PORT     CONFIG_TCP_SERVER_PORT
 
 static bool has_ip(void)
 {
