@@ -1477,7 +1477,20 @@ static esp_err_t req_wifi_connect(Rpc *req, Rpc *resp, void *priv_data)
 		ESP_LOGI(TAG, "************ connect ****************");
 		//station_connecting = true;
 		ret = esp_wifi_connect();
-		if (ret != ESP_OK) {
+		if (ret == ESP_ERR_WIFI_NOT_STARTED) {
+			/* Host skipped wifi_start (e.g. after a wifi_stop/set_mode sequence).
+			 * Ensure STA mode is set (host may have set mode to NULL), then start.
+			 * WIFI_EVENT_STA_START will trigger esp_wifi_connect(). */
+			ESP_LOGW(TAG, "WiFi not started, starting now before connect");
+			wifi_mode_t mode;
+			if (esp_wifi_get_mode(&mode) == ESP_OK && mode != WIFI_MODE_STA && mode != WIFI_MODE_APSTA) {
+				ESP_LOGW(TAG, "WiFi mode is %d, forcing STA", mode);
+				esp_wifi_set_mode(WIFI_MODE_STA);
+			}
+			ret = esp_wifi_start();
+			if (ret != ESP_OK)
+				ESP_LOGE(TAG, "esp_wifi_start failed: %d", ret);
+		} else if (ret != ESP_OK) {
 			ESP_LOGE(TAG, "Failed to connect to WiFi: %d", ret);
 			station_connecting = false;
 		}
@@ -2352,7 +2365,13 @@ static esp_err_t req_wifi_set_storage(Rpc *req, Rpc *resp, void *priv_data)
 
 	ESP_LOGI(TAG, "Setting wifi storage: %lu", req_payload->storage);
 
+#ifdef CONFIG_ESP_HOSTED_NETWORK_SPLIT_ENABLED
+	/* In network-split mode the slave owns WiFi credentials; always keep
+	 * them in flash so they survive reboots, regardless of what the host requests. */
+	RPC_RET_FAIL_IF(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
+#else
 	RPC_RET_FAIL_IF(esp_wifi_set_storage(req_payload->storage));
+#endif
 
 	return ESP_OK;
 }
