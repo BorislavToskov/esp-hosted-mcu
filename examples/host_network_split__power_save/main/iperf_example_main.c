@@ -9,12 +9,54 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_err.h"
 #include "nvs_flash.h"
 #include "esp_console.h"
 #include "cmd_system.h"
+#include "driver/uart.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#define DATA_UART_PORT      UART_NUM_1
+#define DATA_UART_TX_PIN    10
+#define DATA_UART_RX_PIN    11
+#define DATA_UART_BAUD      115200
+#define DATA_SEND_PERIOD_MS 1000
+
+static const char *DATA_TAG = "uart_data";
+
+static void uart_data_task(void *arg)
+{
+    uint32_t counter = 1;
+    char buf[64];
+    while (1) {
+        int len = snprintf(buf, sizeof(buf), "d%lu,d%lu,d%lu\r\n",
+                           counter, counter + 1, counter + 2);
+        uart_write_bytes(DATA_UART_PORT, buf, len);
+        ESP_LOGI(DATA_TAG, "TX -> %.*s", len - 2, buf); /* strip trailing \r\n */
+        counter += 3;
+        vTaskDelay(pdMS_TO_TICKS(DATA_SEND_PERIOD_MS));
+    }
+}
+
+static void uart_data_init(void)
+{
+    uart_config_t cfg = {
+        .baud_rate  = DATA_UART_BAUD,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+    };
+    ESP_ERROR_CHECK(uart_param_config(DATA_UART_PORT, &cfg));
+    ESP_ERROR_CHECK(uart_set_pin(DATA_UART_PORT, DATA_UART_TX_PIN, DATA_UART_RX_PIN,
+                                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(DATA_UART_PORT, 256, 0, 0, NULL, 0));
+    xTaskCreate(uart_data_task, "uart_data", 2048, NULL, 5, NULL);
+}
 
 /* component manager */
 #include "iperf.h"
@@ -83,6 +125,8 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
+
+    uart_data_init();
 
     /* initialise wifi */
     app_wifi_initialise_config_t config = APP_WIFI_CONFIG_DEFAULT();
