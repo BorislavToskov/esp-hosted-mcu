@@ -63,7 +63,8 @@ list(APPEND COMPONENT_SRCS "${common_dir}/utils/esp_hosted_cli.c")
 idf_component_register(
     SRCS ${COMPONENT_SRCS}
     INCLUDE_DIRS ${COMPONENT_ADD_INCLUDEDIRS}
-    PRIV_REQUIRES driver protobuf-c app_update esp_timer bt
+    PRIV_REQUIRES driver esp_driver_sdio esp_driver_spi esp_driver_uart
+                 protobuf-c app_update esp_timer bt
                  esp_wifi esp_netif esp_event nvs_flash mqtt
                  protocomm wpa_supplicant esp_system hal soc lwip
 )
