@@ -1,0 +1,3 @@
+sdkconfig.defaults.local
+sdkconfig
+build/

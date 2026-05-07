@@ -12,8 +12,8 @@
 static const char *TAG = "demo_app";
 
 #define DEMO_UART_PORT      UART_NUM_1
-#define DEMO_UART_TX_PIN    GPIO_NUM_5
-#define DEMO_UART_RX_PIN    GPIO_NUM_4
+#define DEMO_UART_TX_PIN    GPIO_NUM_3
+#define DEMO_UART_RX_PIN    GPIO_NUM_2
 #define DEMO_UART_BAUD      115200
 #define DEMO_UART_BUF_SIZE  256
 
@@ -113,10 +113,10 @@ void demo_app_start(void)
         .source_clk = UART_SCLK_DEFAULT,
     };
 
-    uart_driver_install(DEMO_UART_PORT, DEMO_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
     uart_param_config(DEMO_UART_PORT, &uart_cfg);
     uart_set_pin(DEMO_UART_PORT, DEMO_UART_TX_PIN, DEMO_UART_RX_PIN,
                  UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(DEMO_UART_PORT, DEMO_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
 
     xTaskCreate(uart_rx_task, "uart_rx_task", 4096, NULL, 5, NULL);
 }

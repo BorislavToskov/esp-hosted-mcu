@@ -19,6 +19,12 @@ if(PROJECT_VERSION_MATCH)
     message(STATUS "Setting PROJECT_VER to: ${PROJECT_VER}")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/sdkconfig.defaults.local")
+    set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.defaults.local")
+else()
+    set(SDKCONFIG_DEFAULTS "sdkconfig.defaults")
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 list(APPEND EXCLUDE_COMPONENTS lwip esp_netif)
 

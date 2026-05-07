@@ -50,6 +50,7 @@ static void uart_data_init(void)
         .parity     = UART_PARITY_DISABLE,
         .stop_bits  = UART_STOP_BITS_1,
         .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
     };
     ESP_ERROR_CHECK(uart_param_config(DATA_UART_PORT, &cfg));
     ESP_ERROR_CHECK(uart_set_pin(DATA_UART_PORT, DATA_UART_TX_PIN, DATA_UART_RX_PIN,
