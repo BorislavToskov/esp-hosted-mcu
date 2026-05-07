@@ -12,8 +12,8 @@
 static const char *TAG = "demo_app";
 
 #define DEMO_UART_PORT      UART_NUM_1
-#define DEMO_UART_TX_PIN    GPIO_NUM_3
-#define DEMO_UART_RX_PIN    GPIO_NUM_2
+#define DEMO_UART_TX_PIN    GPIO_NUM_5 //GPIO_NUM_3
+#define DEMO_UART_RX_PIN    GPIO_NUM_4 //GPIO_NUM_2
 #define DEMO_UART_BAUD      115200
 #define DEMO_UART_BUF_SIZE  256
 

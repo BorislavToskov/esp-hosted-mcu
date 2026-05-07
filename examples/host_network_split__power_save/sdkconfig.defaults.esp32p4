@@ -2,12 +2,12 @@
 # ESP32-P4 specific
 #
 
-CONFIG_SLAVE_IDF_TARGET_ESP32C5=y
+CONFIG_SLAVE_IDF_TARGET_ESP32C6=y
 
 # No board preset — set GPIOs explicitly to match custom wiring
 CONFIG_ESP_HOSTED_P4_DEV_BOARD_NONE=y
 
-# C5 wired to same P4 GPIOs as the C6 slot on the custom board
+# Custom-board SDIO wiring between P4 and C6
 CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_CLK_SLOT_1=18
 CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_CMD_SLOT_1=19
 CONFIG_ESP_HOSTED_PRIV_SDIO_PIN_D0_SLOT_1=14
@@ -19,9 +19,6 @@ CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE=54
 # Support ESP32-P4 chip revision v1.0 (unlocks v0.x/v1.x rev choices)
 CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
 CONFIG_ESP32P4_REV_MIN_100=y
-
-# Reduced clock for initial bringup (raise to 40000 once link is stable)
-CONFIG_ESP_HOSTED_SDIO_CLOCK_FREQ_KHZ=10000
 
 CONFIG_WIFI_RMT_STATIC_RX_BUFFER_NUM=16
 CONFIG_WIFI_RMT_DYNAMIC_RX_BUFFER_NUM=64

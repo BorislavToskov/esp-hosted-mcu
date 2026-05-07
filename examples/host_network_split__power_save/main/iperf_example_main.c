@@ -10,9 +10,15 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+#include <stdatomic.h>
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "esp_sntp.h"
 #include "nvs_flash.h"
 #include "esp_console.h"
 #include "cmd_system.h"
@@ -28,16 +34,43 @@
 
 static const char *DATA_TAG = "uart_data";
 
+static atomic_bool s_time_synced = ATOMIC_VAR_INIT(false);
+
+static void on_sntp_sync(struct timeval *tv)
+{
+    atomic_store(&s_time_synced, true);
+    ESP_LOGI(DATA_TAG, "SNTP first sync: %lld", (long long)tv->tv_sec);
+}
+
+static void on_got_ip(void *arg, esp_event_base_t base, int32_t id, void *data)
+{
+    if (esp_sntp_enabled()) {
+        return;
+    }
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    sntp_set_time_sync_notification_cb(on_sntp_sync);
+    esp_sntp_init();
+    ESP_LOGI(DATA_TAG, "SNTP started");
+}
+
 static void uart_data_task(void *arg)
 {
-    uint32_t counter = 1;
-    char buf[64];
+    char buf[48];
     while (1) {
-        int len = snprintf(buf, sizeof(buf), "d%lu,d%lu,d%lu\r\n",
-                           counter, counter + 1, counter + 2);
+        int len;
+        if (atomic_load(&s_time_synced)) {
+            time_t now = time(NULL);
+            struct tm tm;
+            gmtime_r(&now, &tm);
+            char ts[24];
+            strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%SZ", &tm);
+            len = snprintf(buf, sizeof(buf), "%s\r\n", ts);
+        } else {
+            len = snprintf(buf, sizeof(buf), "NO_SYNC\r\n");
+        }
         uart_write_bytes(DATA_UART_PORT, buf, len);
         ESP_LOGI(DATA_TAG, "TX -> %.*s", len - 2, buf); /* strip trailing \r\n */
-        counter += 3;
         vTaskDelay(pdMS_TO_TICKS(DATA_SEND_PERIOD_MS));
     }
 }
@@ -134,6 +167,9 @@ void app_main(void)
     config.storage = WIFI_STORAGE_RAM;
     config.ps_type = WIFI_PS_NONE;
     app_initialise_wifi(&config);
+
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                               on_got_ip, NULL));
 #if CONFIG_ESP_WIFI_ENABLE_WIFI_RX_STATS
 #if CONFIG_ESP_WIFI_ENABLE_WIFI_RX_MU_STATS
     esp_wifi_enable_rx_statistics(true, true);
